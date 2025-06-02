@@ -52,7 +52,7 @@ export default function TopicFeedbackDashboard() {
     setError("");
     try {
       const res = await fetch(
-        `http://localhost:5000/feedbackmatrix?course=${encodeURIComponent(
+        `https://chrono-lms.onrender.com/feedbackmatrix?course=${encodeURIComponent(
           selectedCourse
         )}`,
         {
