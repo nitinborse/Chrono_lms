@@ -184,14 +184,15 @@ require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+app.use(cors({
+    origin: "https://chrono-lms-frontend.onrender.com",
+    headers: ["Content-Type"],
+    credentials: true,
+}));
 
 app.use(cors());
 app.use(express.json());
 // Allow your frontend origin
-app.use(cors({
-  origin: 'https://chrono-lms-frontend.onrender.com',
-  credentials: true
-}));
 
 // MySQL Connection Pool
 const db = mysql.createPool({
