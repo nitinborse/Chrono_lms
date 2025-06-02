@@ -22,7 +22,7 @@ export default function AttendanceReport() {
     try {
       // Step 1: Fetch enrolled students
       const res = await fetch(
-        `http://localhost:5000/enrolledstudents?course=${encodeURIComponent(selectedCourse)}&teacher=${encodeURIComponent(selectedTeacher)}`,
+        `https://chrono-lms.onrender.com/enrolledstudents?course=${encodeURIComponent(selectedCourse)}&teacher=${encodeURIComponent(selectedTeacher)}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -33,7 +33,7 @@ export default function AttendanceReport() {
       setStudents(studentsData);
   
       // Step 2: Fetch today's attendance for this course
-      const attRes = await fetch(`http://localhost:5000/attendance?course=${encodeURIComponent(selectedCourse)}&teacher=${encodeURIComponent(selectedTeacher)}`, {
+      const attRes = await fetch(`https://chrono-lms.onrender.com/attendance?course=${encodeURIComponent(selectedCourse)}&teacher=${encodeURIComponent(selectedTeacher)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -108,7 +108,7 @@ export default function AttendanceReport() {
     const today = new Date().toISOString().split("T")[0]; // Format: yyyy-mm-dd
   
     try {
-      const res = await fetch("http://localhost:5000/attendanceData", {
+      const res = await fetch("https://chrono-lms.onrender.com/attendanceData", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
