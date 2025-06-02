@@ -20,7 +20,7 @@ export default function EnrolledStudents() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:5000/enrolledstudents?course=${encodeURIComponent(selectedCourse)}&teacher=${encodeURIComponent(selectedTeacher)}`,
+        `https://chrono-lms.onrender.com/enrolledstudents?course=${encodeURIComponent(selectedCourse)}&teacher=${encodeURIComponent(selectedTeacher)}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
