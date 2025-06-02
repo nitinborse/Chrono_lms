@@ -1,7 +1,7 @@
 // src/api.js
 import axios from "axios";
 
-const API_URL = "http://localhost:5000"; // change if deployed
+const API_URL = "https://chrono-lms.onrender.com"; // change if deployed
 
 const api = axios.create({
   baseURL: API_URL,
