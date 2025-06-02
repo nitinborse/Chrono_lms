@@ -13,7 +13,7 @@ export default function CourseTopics() {
   const token = localStorage.getItem("token");
 
   const api = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: "https://chrono-lms.onrender.com",
     headers: { Authorization: `Bearer ${token}` },
   });
 
