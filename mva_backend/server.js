@@ -1,7 +1,6 @@
-
+const db = require('./db');
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -18,18 +17,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// PostgreSQL Connection Pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-// Helper function for querying
-const db = {
-  query: (text, params) => pool.query(text, params),
-};
 
 // JWT Middleware
 function authenticateToken(req, res, next) {
