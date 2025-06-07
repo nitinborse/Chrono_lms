@@ -1,26 +1,39 @@
-const db = require('./db');
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+const db = require("./db"); // your DB connection module
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS setup
-app.use(cors({
-  origin: ['https://chrono-lms-frontend.onrender.com', 'http://localhost:3000' , 'http://localhost:5000'],
-  headers: ["Content-Type"],
-  credentials: true,
-}));
+// Correct CORS setup
+const allowedOrigins = [
+  "https://chrono-lms-frontend.onrender.com",
+  "http://localhost:3000"
+];
 
+app.use(cors({
+  origin: function(origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(express.json());
 
-
-// JWT Middleware
+// JWT Authentication middleware
 function authenticateToken(req, res, next) {
-  const token = req.headers["authorization"]?.split(" ")[1];
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.sendStatus(401);
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
@@ -30,6 +43,7 @@ function authenticateToken(req, res, next) {
   });
 }
 
+// Registration route
 app.post("/register", async (req, res) => {
   const { name, email, password, role = "student", rollnumber } = req.body;
 
@@ -55,6 +69,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Login route
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -76,6 +91,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// Select course route
 app.post("/select-course", authenticateToken, async (req, res) => {
   const { course, teacher } = req.body;
   const userId = req.user.id;
@@ -96,6 +112,7 @@ app.post("/select-course", authenticateToken, async (req, res) => {
   }
 });
 
+// Add topic route (Super Teacher only)
 app.post("/add-topic", authenticateToken, async (req, res) => {
   if (req.user.role !== "super") return res.sendStatus(403);
   const { course, title, class_date } = req.body;
@@ -108,9 +125,9 @@ app.post("/add-topic", authenticateToken, async (req, res) => {
   }
 });
 
+// Get course topics and feedback
 app.get("/courses", authenticateToken, async (req, res) => {
   try {
-    let topics = [];
     let feedbacks = {};
     let submitted = false;
 
@@ -122,7 +139,7 @@ app.get("/courses", authenticateToken, async (req, res) => {
       "SELECT id, title, class_date FROM topics WHERE course = $1 AND class_date = CURRENT_DATE ORDER BY class_date ASC",
       [course]
     );
-    topics = topicResult.rows;
+    const topics = topicResult.rows;
 
     const topicIds = topics.map(t => t.id);
     if (topicIds.length > 0) {
@@ -145,6 +162,7 @@ app.get("/courses", authenticateToken, async (req, res) => {
   }
 });
 
+// Get all topics up to today
 app.get("/topics", authenticateToken, async (req, res) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
@@ -160,6 +178,7 @@ app.get("/topics", authenticateToken, async (req, res) => {
   }
 });
 
+// Submit or update feedback
 app.post("/feedback", authenticateToken, async (req, res) => {
   const { topic_id, status } = req.body;
   const userId = req.user.id;
@@ -178,6 +197,7 @@ app.post("/feedback", authenticateToken, async (req, res) => {
   }
 });
 
+// Get enrolled students for a course and teacher
 app.get("/enrolledstudents", authenticateToken, async (req, res) => {
   const { course, teacher } = req.query;
   if (!course || !teacher) return res.status(400).json({ message: "Course and teacher query params are required" });
@@ -197,4 +217,6 @@ app.get("/enrolledstudents", authenticateToken, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
