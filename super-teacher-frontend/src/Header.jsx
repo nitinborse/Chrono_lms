@@ -68,8 +68,8 @@ export default function Header({ userName, onLogout }) {
             )}
 
             <NavDropdown title={userName || "User"} id="basic-nav-dropdown" align="end">
-              <NavDropdown.Item onClick={handleProfile}>Profile</NavDropdown.Item>
-              <NavDropdown.Divider />
+              {/* <NavDropdown.Item onClick={handleProfile}>Profile</NavDropdown.Item>
+              <NavDropdown.Divider /> */}
               <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
             </NavDropdown>
           </Nav>
