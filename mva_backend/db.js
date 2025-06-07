@@ -13,14 +13,17 @@ const pool = new Pool({
 // Optional: Check the connection once when the app starts
 async function testConnection() {
   try {
-    const connection = await pool.getConnection();
-    console.log('✅ Connected to MySQL');
-    connection.release();
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW()');
+    console.log('✅ Connected to PostgreSQL at', result.rows[0].now);
+    client.release();
   } catch (err) {
-    console.error('❌ MySQL connection error:', err);
+    console.error('❌ PostgreSQL connection error:', err);
   }
 }
 
 testConnection();
 
-module.exports = pool;
+module.exports = {
+  query: (text, params) => pool.query(text, params),
+};
