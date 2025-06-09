@@ -173,6 +173,39 @@ app.post("/select-course", authenticateToken, async (req, res) => {
   }
 });
 
+app.post("/feedback-submit", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const tokenRollnumber = req.user.rollnumber;
+  const bodyRollnumber = req.body.rollnumber || null;
+
+  const rollnumber = tokenRollnumber || bodyRollnumber;
+  const feedbacks = req.body.feedbacks;
+
+  if (!rollnumber) {
+    return res.status(400).json({ error: "Rollnumber is required" });
+  }
+
+  const values = Object.entries(feedbacks); // [ [topicId, status], ... ]
+
+  try {
+    const insertPromises = values.map(([topicId, status]) =>
+      db.query(
+        `INSERT INTO feedback (user_id, topic_id, status, user_rollnumber)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, topic_id)
+         DO UPDATE SET status = EXCLUDED.status`,
+        [userId, topicId, status, rollnumber]
+      )
+    );
+
+    await Promise.all(insertPromises);
+    res.status(200).json({ message: "Feedback submitted" });
+  } catch (err) {
+    console.error("Feedback submission error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 // Add topic route (Super Teacher only)
 app.post("/add-topic", authenticateToken, async (req, res) => {
