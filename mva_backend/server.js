@@ -282,23 +282,33 @@ app.get("/feedbackmatrix", authenticateToken, async (req, res) => {
   }
 });
 
-// Get course topics and feedback
+// Get course topics, feedback, and teacher's name
 app.get("/courses", authenticateToken, async (req, res) => {
   try {
     let feedbacks = {};
     let submitted = false;
 
-    const courseResult = await db.query("SELECT course FROM user_courses WHERE user_id = $1", [req.user.id]);
-    const course = courseResult.rows[0]?.course;
-    if (!course) return res.status(400).json({ message: "No course selected" });
+    // Fetch course and teacher for the student
+    const courseResult = await db.query(
+      "SELECT course, teacher FROM user_courses WHERE user_id = $1",
+      [req.user.id]
+    );
 
+    const courseData = courseResult.rows[0];
+
+    if (!courseData) return res.status(400).json({ message: "No course selected" });
+
+    const { course, teacher } = courseData;
+
+    // Fetch today's topics for the selected course
     const topicResult = await db.query(
       "SELECT id, title, class_date FROM topics WHERE course = $1 AND class_date = CURRENT_DATE ORDER BY class_date ASC",
       [course]
     );
-    const topics = topicResult.rows;
 
+    const topics = topicResult.rows;
     const topicIds = topics.map(t => t.id);
+
     if (topicIds.length > 0) {
       const feedbackResult = await db.query(
         `SELECT topic_id, status FROM feedback WHERE user_id = $1 AND topic_id = ANY($2)`,
@@ -309,15 +319,18 @@ app.get("/courses", authenticateToken, async (req, res) => {
         feedbacks[fb.topic_id] = fb.status;
       });
 
+      // Check if feedback is submitted for all today's topics
       submitted = topicIds.every(id => feedbacks[id]);
     }
 
-    res.json({ course, topics, feedbacks, submitted });
+    // Send response including teacher's name
+    res.json({ course, teacher, topics, feedbacks, submitted });
   } catch (err) {
     console.error("Error in GET /courses:", err);
     res.status(500).json({ message: "Error loading course data" });
   }
 });
+
 
 // Get all topics up to today
 app.get("/topics", authenticateToken, async (req, res) => {

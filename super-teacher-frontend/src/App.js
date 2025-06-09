@@ -5,8 +5,11 @@ import {
   Route,
   useNavigate,
   useLocation,
-  Navigate 
+  Navigate
 } from "react-router-dom";
+
+import { LoaderProvider, useLoader } from "./LoaderContext";
+import Loader from "./Loader2";
 
 import Login from "./Login2";
 import Register from "./Register";
@@ -17,51 +20,45 @@ import Header from "./Header";
 import EnrolledStudents from "./EnrolledStudent";
 import TopicFeedbackDashboard from "./TopicFeedbackReport";
 import AttendanceReport from "./AttendanceReport";
-import ProtectedRoute from "./ProtectedRoute"; // 🔒 Import protection
+import ProtectedRoute from "./ProtectedRoute";
 
-// Wrapper to allow useNavigate in Login
+// Login wrapper
 function LoginWrapper() {
   const navigate = useNavigate();
+  const { setLoading } = useLoader();
 
-  async function handleLogin(email, password) {
+  const handleLogin = async (email, password) => {
     try {
-      const response = await fetch("https://chrono-lms.onrender.com/login", {
+      setLoading(true);
+      const res = await fetch("https://chrono-lms.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
+      setLoading(false);
 
-      if (response.ok) {
+      if (res.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
         localStorage.setItem("rollnumber", data.rollnumber);
         localStorage.setItem("name", data.name);
-
-        if (data.role === "student") {
-          navigate("/studentdashboard");
-        } else {
-          navigate("/teacherdashboard");
-        }
+        navigate(data.role === "student" ? "/studentdashboard" : "/teacherdashboard");
       } else {
         alert(data.message || "Invalid credentials");
       }
     } catch (err) {
       console.error("Login error:", err);
+      setLoading(false);
       alert("Something went wrong");
     }
-  }
+  };
 
-  return (
-    <Login
-      onLogin={handleLogin}
-      switchToRegister={() => navigate("/register")}
-    />
-  );
+  return <Login onLogin={handleLogin} switchToRegister={() => navigate("/register")} />;
 }
 
-// Wrapper to allow useNavigate in Register
+// Register wrapper
 function RegisterWrapper() {
   const navigate = useNavigate();
 
@@ -70,22 +67,14 @@ function RegisterWrapper() {
     navigate("/");
   };
 
-  return (
-    <Register
-      onRegister={handleRegister}
-      switchToLogin={() => navigate("/")}
-    />
-  );
+  return <Register onRegister={handleRegister} switchToLogin={() => navigate("/")} />;
 }
 
-// Layout component to show header conditionally
+// Header layout
 function Layout({ children }) {
   const location = useLocation();
-  const hideHeaderPaths = ["/", "/register"];
-  const hideHeader = hideHeaderPaths.includes(location.pathname);
-
+  const hideHeader = ["/", "/register"].includes(location.pathname);
   const userName = localStorage.getItem("name") || "User";
-
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -101,99 +90,45 @@ function Layout({ children }) {
   );
 }
 
-function App() {
+// Main App
+function AppContent() {
+  const { loading } = useLoader();
+
   return (
-    <Router>
-      <Routes>
-        {/* Public routes */}
-        <Route
-  path="*"
-  element={
-    (() => {
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
-
-      if (!token || !role) {
-        // Not logged in, redirect to login page
-        return <Navigate to="/" replace />;
-      }
-
-      // Redirect based on role
-      if (role === "student") {
-        return <Navigate to="/studentdashboard" replace />;
-      } else {
-        // For super teacher or any other role
-        return <Navigate to="/teacherdashboard" replace />;
-      }
-    })()
-  }
-/>          <Route path="/" element={<LoginWrapper />} />
-        <Route path="/register" element={<RegisterWrapper />} />
-
-        {/* Protected routes */}
-        <Route
-          path="/studentdashboard"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <StudentDashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacherdashboard"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <TeacherDashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/topicfeedback"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <TopicFeedbackDashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/topics"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <CourseTopics />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/attendancereport"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <AttendanceReport />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/enrolledstudents"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <EnrolledStudents />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+    <>
+      {loading && <Loader />}
+      <Router>
+        <Routes>
+          <Route
+            path="*"
+            element={
+              (() => {
+                const token = localStorage.getItem("token");
+                const role = localStorage.getItem("role");
+                if (!token || !role) return <Navigate to="/" replace />;
+                return <Navigate to={role === "student" ? "/studentdashboard" : "/teacherdashboard"} replace />;
+              })()
+            }
+          />
+          <Route path="/" element={<LoginWrapper />} />
+          <Route path="/register" element={<RegisterWrapper />} />
+          <Route path="/studentdashboard" element={<ProtectedRoute><Layout><StudentDashboard /></Layout></ProtectedRoute>} />
+          <Route path="/teacherdashboard" element={<ProtectedRoute><Layout><TeacherDashboard /></Layout></ProtectedRoute>} />
+          <Route path="/topicfeedback" element={<ProtectedRoute><Layout><TopicFeedbackDashboard /></Layout></ProtectedRoute>} />
+          <Route path="/topics" element={<ProtectedRoute><Layout><CourseTopics /></Layout></ProtectedRoute>} />
+          <Route path="/attendancereport" element={<ProtectedRoute><Layout><AttendanceReport /></Layout></ProtectedRoute>} />
+          <Route path="/enrolledstudents" element={<ProtectedRoute><Layout><EnrolledStudents /></Layout></ProtectedRoute>} />
+        </Routes>
+      </Router>
+    </>
   );
 }
 
-export default App;
+// Export main app with loader provider
+export default function App() {
+  return (
+    <LoaderProvider>
+      <AppContent />
+    </LoaderProvider>
+  );
+}

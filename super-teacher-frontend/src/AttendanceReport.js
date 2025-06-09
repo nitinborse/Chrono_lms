@@ -5,7 +5,7 @@ import {
   Card,
 } from "react-bootstrap";
 const courses = ["Web Development", "Python", "AI", "DBMS", "Robotics", "Swift"];
-const teachers = ["Alice", "Bob", "Charlie"];
+const teachers = ["Vipin Yadav" , "Durgesh Pandey" ,"Nitin Paliwal" , "Shubham Suralkar" , "Jay Khatri" , "Rahul Rane" ,"Dipak Patil" , "Nitin Borse" , "Balwant Singht"];
 
 
 export default function AttendanceReport() {
@@ -24,8 +24,9 @@ export default function AttendanceReport() {
       const res = await fetch(
         `https://chrono-lms.onrender.com/enrolledstudents?course=${encodeURIComponent(selectedCourse)}&teacher=${encodeURIComponent(selectedTeacher)}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+          headers: { "Authorization": `Bearer ${localStorage.getItem('token')}` ,
+          "Content-Type": "application/json"},
+        },
       );
       
       if (!res.ok) throw new Error("Failed to fetch students");

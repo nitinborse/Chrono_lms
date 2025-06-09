@@ -14,7 +14,7 @@ export default function TeacherDashboard() {
     if (!newTopicTitle.trim()) return alert("Topic title is required");
 
     try {
-      await fetch("https://chrono-lms.onrender.com/add-topics", {
+      await fetch("https://chrono-lms.onrender.com/add-topic", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

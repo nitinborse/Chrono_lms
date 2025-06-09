@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import bg from './bg.jpeg';
 import logo from './logo2.png';
+import { Eye, EyeOff } from 'lucide-react'; // Using lucide-react icons
+
 
 export default function Register({ switchToLogin }) {
   const [formData, setFormData] = useState({
@@ -14,6 +16,13 @@ export default function Register({ switchToLogin }) {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -78,7 +87,7 @@ export default function Register({ switchToLogin }) {
               name="name"
               type="text"
               className="form-control"
-              placeholder="Enter name"
+              placeholder="Enter Full Name"
               required
               value={formData.name}
               onChange={handleChange}
@@ -92,7 +101,7 @@ export default function Register({ switchToLogin }) {
               name="email"
               type="email"
               className="form-control"
-              placeholder="Enter email"
+              placeholder="Enter Email"
               required
               value={formData.email}
               onChange={handleChange}
@@ -106,7 +115,7 @@ export default function Register({ switchToLogin }) {
               name="rollnumber"
               type="text"
               className="form-control"
-              placeholder="Enter roll number"
+              placeholder="Enter Roll Number Or Admission Number"
               required
               value={formData.rollnumber}
               onChange={handleChange}
@@ -115,18 +124,28 @@ export default function Register({ switchToLogin }) {
           </div>
 
           <div className="mb-3">
-            <label className="form-label" style={{ color: "#2872bc" }}>Password</label>
-            <input
-              name="password"
-              type="password"
-              className="form-control"
-              placeholder="Enter password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              style={{ borderColor: "#40aeef" }}
-            />
-          </div>
+  <label className="form-label" style={{ color: "#2872bc" }}>Password</label>
+  <div className="input-group">
+    <input
+      name="password"
+      type={showPassword ? "text" : "password"}
+      className="form-control"
+      placeholder="Enter password"
+      required
+      value={formData.password}
+      onChange={handleChange}
+      style={{ borderColor: "#40aeef" }}
+    />
+    <span
+      className="input-group-text"
+      onClick={togglePasswordVisibility}
+      style={{ cursor: "pointer", backgroundColor: "#fff", borderColor: "#40aeef" }}
+    >
+      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+    </span>
+  </div>
+</div>
+
 
           <div className="mb-3">
             <label className="form-label" style={{ color: "#2872bc" }}>Register As</label>
@@ -138,7 +157,7 @@ export default function Register({ switchToLogin }) {
               style={{ borderColor: "#40aeef" }}
             >
               <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
+              {/* <option value="teacher">Teacher</option> */}
             </select>
           </div>
 

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function StudentDashboard() {
   const [course, setCourse] = useState("");
+  const [teacher, setTeacher] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function StudentDashboard() {
     try {
       const res = await api.get("/courses");
       setCourse(res.data.course || "");
+      setTeacher(res.data.teacher || ""); // 👈 Add this line
     } catch (err) {
       if (err.response?.status === 400) {
         setCourse(""); // Not selected
@@ -63,7 +65,8 @@ export default function StudentDashboard() {
       ) : course ? (
         <>
           <div className="alert alert-success">
-            🎓 Your Selected Course: <strong>{course}</strong>
+            🎓 Your Selected Course: <strong>{course}</strong><br />
+            👨‍🏫 Assigned Teacher: <strong>{teacher}</strong>
           </div>
           <div className="text-center">
             <button className="btn btn-primary" onClick={handleGoToTopics}>
