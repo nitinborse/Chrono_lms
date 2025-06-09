@@ -187,6 +187,68 @@ app.post("/add-topic", authenticateToken, async (req, res) => {
   }
 });
 
+app.get("/feedbackmatrix", authenticateToken, async (req, res) => {
+  const { course } = req.query;
+
+  if (!course) {
+    return res.status(400).json({ error: "Course is required" });
+  }
+
+  try {
+    // 1. Get topics for the course
+    const topicsResult = await db.query(
+      "SELECT id, title FROM topics WHERE course = $1 ORDER BY class_date ASC",
+      [course]
+    );
+    const topics = topicsResult.rows;
+
+    // 2. Get students enrolled in the course
+    const studentsResult = await db.query(
+      `SELECT u.id, u.name, u.rollnumber 
+       FROM users u 
+       JOIN user_courses uc ON u.id = uc.user_id 
+       WHERE u.role = 'student' AND uc.course = $1`,
+      [course]
+    );
+    const studentsRaw = studentsResult.rows;
+
+    const studentIds = studentsRaw.map((s) => s.id);
+    const topicIds = topics.map((t) => t.id);
+
+    if (studentIds.length === 0 || topicIds.length === 0) {
+      return res.json({ topics, students: [] });
+    }
+
+    // 3. Get feedback entries
+    const feedbackResult = await db.query(
+      `SELECT user_id, topic_id, status 
+       FROM feedback 
+       WHERE user_id = ANY($1) AND topic_id = ANY($2)`,
+      [studentIds, topicIds]
+    );
+    const feedbacks = feedbackResult.rows;
+
+    // 4. Group feedback by student
+    const feedbackMap = {};
+    feedbacks.forEach(({ user_id, topic_id, status }) => {
+      if (!feedbackMap[user_id]) feedbackMap[user_id] = [];
+      feedbackMap[user_id].push({ topic_id, status });
+    });
+
+    // 5. Build final structure
+    const students = studentsRaw.map((student) => ({
+      name: student.name,
+      rollnumber: student.rollnumber,
+      feedbacks: feedbackMap[student.id] || [],
+    }));
+
+    res.json({ topics, students });
+  } catch (err) {
+    console.error("Error in /feedbackmatrix:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Get course topics and feedback
 app.get("/courses", authenticateToken, async (req, res) => {
   try {
