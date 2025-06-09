@@ -1,12 +1,13 @@
-// src/components/Login.js
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import logo from "./logo2.png"; // Adjust path based on actual location
-import bg from "./bg.jpeg"; // Adjust path based on actual location
+import logo from "./logo2.png";
+import bg from "./bg.jpeg";
+import { Eye, EyeOff } from "lucide-react"; // Importing lucide-react icons
 
- function Login({ onLogin, switchToRegister }) {
+function Login({ onLogin, switchToRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   function submit(e) {
     e.preventDefault();
@@ -17,10 +18,10 @@ import bg from "./bg.jpeg"; // Adjust path based on actual location
     <div
       className="min-vh-100 d-flex align-items-center justify-content-center"
       style={{
-        backgroundImage: `url(${bg})`, // fixed usage here
+        backgroundImage: `url(${bg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        height: "120px"
+        height: "120px",
       }}
     >
       <div
@@ -34,11 +35,7 @@ import bg from "./bg.jpeg"; // Adjust path based on actual location
       >
         {/* Logo */}
         <div className="text-center mb-4">
-          <img
-            src={logo}
-            alt="Logo"
-            style={{ height: "60px" }}
-          />
+          <img src={logo} alt="Logo" style={{ height: "60px" }} />
         </div>
 
         <form onSubmit={submit}>
@@ -57,21 +54,32 @@ import bg from "./bg.jpeg"; // Adjust path based on actual location
               style={{ borderColor: "#40aeef" }}
             />
           </div>
+
           <div className="mb-3">
             <label htmlFor="password" className="form-label" style={{ color: "#2872bc" }}>
               Password
             </label>
-            <input
-              type="password"
-              className="form-control"
-              id="password"
-              placeholder="Enter password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ borderColor: "#40aeef" }}
-            />
+            <div className="input-group">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="form-control"
+                id="password"
+                placeholder="Enter password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ borderColor: "#40aeef" }}
+              />
+              <span
+                className="input-group-text"
+                style={{ cursor: "pointer", background: "white" }}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </span>
+            </div>
           </div>
+
           <button
             type="submit"
             className="btn w-100"
@@ -86,7 +94,7 @@ import bg from "./bg.jpeg"; // Adjust path based on actual location
           <button
             type="button"
             className="btn mb-1 btn-link"
-            style={{ color: "#f10909"  }}
+            style={{ color: "#f10909" }}
             onClick={switchToRegister}
           >
             Register
@@ -96,4 +104,5 @@ import bg from "./bg.jpeg"; // Adjust path based on actual location
     </div>
   );
 }
-export default Login
+
+export default Login;
