@@ -194,7 +194,7 @@ app.post("/feedback-submit", authenticateToken, async (req, res) => {
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (user_id, topic_id)
          DO UPDATE SET status = EXCLUDED.status`,
-        [userId, topicId, status, rollnumber]
+        [userId, topicId, status.toLowerCase(), rollnumber]  
       )
     );
 
