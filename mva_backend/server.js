@@ -92,25 +92,87 @@ app.post("/login", async (req, res) => {
 });
 
 // Select course route
+// app.post("/select-course", authenticateToken, async (req, res) => {
+//   const { course, teacher } = req.body;
+//   const userId = req.user.id;
+
+//   if (!course || !teacher) return res.status(400).json({ message: "Course and teacher are required" });
+
+//   try {
+//     const result = await db.query("SELECT * FROM user_courses WHERE user_id = $1", [userId]);
+//     if (result.rows.length > 0) {
+//       return res.status(400).json({ message: "Course already selected, cannot change" });
+//     }
+
+//     await db.query("INSERT INTO user_courses (user_id, course, teacher) VALUES ($1, $2, $3)", [userId, course, teacher]);
+//     res.status(200).json({ message: "Course selected successfully" });
+//   } catch (err) {
+//     console.error("Error selecting course:", err);
+//     res.status(500).json({ message: "Error selecting course" });
+//   }
+// });
+
 app.post("/select-course", authenticateToken, async (req, res) => {
-  const { course, teacher } = req.body;
+  const { course } = req.body;
   const userId = req.user.id;
 
-  if (!course || !teacher) return res.status(400).json({ message: "Course and teacher are required" });
+  if (!course) return res.status(400).json({ message: "Course is required" });
+
+  const teacherMap = {
+    "Web Development": ["Nitin Borse", "Dipak Patil"],
+    "Python": ["Nitin Paliwal", "Vipin Yadav"],
+    "AI": ["Tanishka Mam", "Balwant Singht"],
+    "DBMS": ["Durgesh Pandey", "Jay Khatri"],
+    "Robotics": ["Vipin Yadav"],
+    "Swift": ["Balwant Singht"]
+  };
+
+  const teachers = teacherMap[course];
+
+  if (!teachers) return res.status(400).json({ message: "Invalid course name" });
 
   try {
-    const result = await db.query("SELECT * FROM user_courses WHERE user_id = $1", [userId]);
-    if (result.rows.length > 0) {
+    const existing = await db.query("SELECT * FROM user_courses WHERE user_id = $1", [userId]);
+    if (existing.rows.length > 0) {
       return res.status(400).json({ message: "Course already selected, cannot change" });
     }
 
-    await db.query("INSERT INTO user_courses (user_id, course, teacher) VALUES ($1, $2, $3)", [userId, course, teacher]);
-    res.status(200).json({ message: "Course selected successfully" });
+    let assignedTeacher = teachers[0];
+
+    if (teachers.length === 2) {
+      const countResult = await db.query(
+        `SELECT teacher, COUNT(*) as count
+         FROM user_courses
+         WHERE course = $1 AND teacher = ANY($2)
+         GROUP BY teacher`,
+        [course, teachers]
+      );
+
+      const counts = {
+        [teachers[0]]: 0,
+        [teachers[1]]: 0
+      };
+
+      countResult.rows.forEach(row => {
+        counts[row.teacher] = parseInt(row.count);
+      });
+
+      assignedTeacher = counts[teachers[0]] <= counts[teachers[1]] ? teachers[0] : teachers[1];
+    }
+
+    await db.query(
+      "INSERT INTO user_courses (user_id, course, teacher) VALUES ($1, $2, $3)",
+      [userId, course, assignedTeacher]
+    );
+
+    res.status(200).json({ message: `Course selected successfully. Assigned to ${assignedTeacher}` });
+
   } catch (err) {
     console.error("Error selecting course:", err);
     res.status(500).json({ message: "Error selecting course" });
   }
 });
+
 
 // Add topic route (Super Teacher only)
 app.post("/add-topic", authenticateToken, async (req, res) => {
