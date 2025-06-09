@@ -259,6 +259,56 @@ app.post("/feedback", authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/attendance', authenticateToken, async (req, res) => {
+  const course = req.query.course;
+  const teacher = req.query.teacher;
+
+  if (!course || !teacher) {
+    return res.status(400).json({ message: "Course and teacher are required" });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT rollnumber, status FROM attendance 
+       WHERE course = $1 AND teacher = $2 AND attendance_date = CURRENT_DATE`,
+      [course, teacher]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching attendance:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.post('/attendanceData', authenticateToken, async (req, res) => {
+  const { attendance, course, date, teacher } = req.body;
+
+  if (!course || !date || !Array.isArray(attendance) || !teacher) {
+    return res.status(400).json({ message: "Course, teacher, date, and attendance data are required" });
+  }
+
+  try {
+    for (const record of attendance) {
+      const { rollnumber, status } = record;
+
+      // UPSERT logic
+      await db.query(
+        `INSERT INTO attendance (rollnumber, status, attendance_date, course, teacher)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (rollnumber, attendance_date, course, teacher)
+         DO UPDATE SET status = EXCLUDED.status`,
+        [rollnumber, status, date, course, teacher]
+      );
+    }
+
+    res.json({ message: "Attendance submitted/updated successfully" });
+  } catch (error) {
+    console.error("Error saving attendance:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // Get enrolled students for a course and teacher
 app.get("/enrolledstudents", authenticateToken, async (req, res) => {
   const { course, teacher } = req.query;
